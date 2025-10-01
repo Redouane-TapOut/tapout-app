@@ -1,14 +1,81 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TapOut - Demo</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2ecc71">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TapOut - Démo PWA</title>
+
+  <!-- Style simple -->
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    h1 { color: #2c3e50; }
+    #reader { width: 100%; max-width: 400px; margin: auto; }
+    button {
+      background-color: green; color: white; font-size: 20px;
+      border: none; border-radius: 8px; padding: 15px 30px;
+      margin-top: 20px; cursor: pointer;
+    }
+    button:disabled { background-color: gray; cursor: not-allowed; }
+  </style>
+
+  <!-- Librairie QR Code -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 </head>
 <body>
   <h1>TapOut - Démo PWA</h1>
-  <p>Votre application TapOut est prête à être testée et installée comme PWA.</p>
+  <p>Scannez un QR Code pour valider votre TAP OUT.</p>
+
+  <!-- Zone caméra -->
+  <div id="reader"></div>
+
+  <!-- Bouton TAP OUT -->
+  <button id="tapoutBtn" disabled>TAP OUT</button>
+
+  <script>
+    // Initialisation EmailJS
+    (function(){
+      emailjs.init("X6JsF1CJe3ZK-dsZl"); // Clé publique
+    })();
+
+    let siteScanne = null;
+
+    // Quand un QR code est scanné
+    function onScanSuccess(decodedText, decodedResult) {
+      siteScanne = decodedText;
+      document.getElementById("tapoutBtn").disabled = false;
+      alert("QR Code détecté : " + siteScanne);
+    }
+
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess);
+
+    // Bouton TAP OUT
+    document.getElementById("tapoutBtn").addEventListener("click", function(){
+      if (!siteScanne) {
+        alert("Veuillez scanner un QR Code avant de valider.");
+        return;
+      }
+
+      let now = new Date();
+      let date = now.toLocaleDateString("fr-FR");
+      let heure = now.toLocaleTimeString("fr-FR");
+
+      // Envoi Email via EmailJS
+      emailjs.send("service_gw5o8fc", "template_8zj6688", {
+        from_name: "Rachid El Amri",
+        tapout_site: siteScanne,
+        tapout_date: date,
+        tapout_time: heure
+      }).then(function(response) {
+          alert("✅ TAP OUT validé et email envoyé !");
+      }, function(error) {
+          alert("❌ Erreur lors de l'envoi, vérifiez EmailJS.");
+          console.error(error);
+      });
+    });
+  </script>
 </body>
 </html>
